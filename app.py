@@ -34,8 +34,18 @@ def fetch_stock_data():
             headers = {
                 "User-Agent": "Mozilla/5.0"
             }
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=10)
+
+            print("Status Code:", response.status_code)
+            print("Response Text:", response.text[:200])
+
             data = response.json()
+
+            if 'quoteResponse' not in data:
+                raise Exception("Invalid Yahoo response")
+
+            if len(data['quoteResponse']['result']) == 0:
+                raise Exception("No stock data returned")
 
             result = data['quoteResponse']['result'][0]
 
