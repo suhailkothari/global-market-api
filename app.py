@@ -51,7 +51,7 @@ stocks = [
     "TCS.NS",
     "WIPRO.NS",
     "INDIGRID-IV.NS",
-    "PGINVIT-IV.NS"
+    "PGINVIT-IV.NS",
     "BANKBEES.NS",
     "FMCGIETF.NS",
     "NIFTYBEES.NS",
