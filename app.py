@@ -33,11 +33,12 @@ def fetch_stock_data():
 
             stock = yf.Ticker(ticker)
 
-            info = stock.info
+            # fetch latest fast info
+            info = stock.fast_info
 
             data_list.append({
                 "Ticker": ticker,
-                "Price": info.get("currentPrice"),
+                "Price": info.get("lastPrice"),
                 "Currency": info.get("currency"),
                 "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -65,7 +66,7 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(fetch_stock_data, 'interval', minutes=5)
 scheduler.start()
 
-# Run once immediately on startup
+# run once immediately
 fetch_stock_data()
 
 # --------------------------------
