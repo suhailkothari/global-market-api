@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import yfinance as yf
 import json
 
@@ -33,21 +34,27 @@ def fetch_stock_data():
 
             stock = yf.Ticker(ticker)
 
-            # fetch latest fast info
+            # Fast latest data
             info = stock.fast_info
 
             data_list.append({
                 "Ticker": ticker,
-                "Price": info.get("lastPrice"),
+                "CurrentPrice": info.get("lastPrice"),
+                "PreviousClose": info.get("previousClose"),
                 "Currency": info.get("currency"),
-                "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "TimeIST": datetime.now(
+                    ZoneInfo("Asia/Kolkata")
+                ).strftime("%Y-%m-%d %H:%M:%S")
             })
 
         except Exception as e:
 
             data_list.append({
                 "Ticker": ticker,
-                "Error": str(e)
+                "Error": str(e),
+                "TimeIST": datetime.now(
+                    ZoneInfo("Asia/Kolkata")
+                ).strftime("%Y-%m-%d %H:%M:%S")
             })
 
     latest_data = data_list
@@ -66,7 +73,7 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(fetch_stock_data, 'interval', minutes=5)
 scheduler.start()
 
-# run once immediately
+# run immediately at startup
 fetch_stock_data()
 
 # --------------------------------
@@ -75,6 +82,13 @@ fetch_stock_data()
 @app.route('/data')
 def get_data():
     return jsonify(latest_data)
+
+# --------------------------------
+# HOME ROUTE
+# --------------------------------
+@app.route('/')
+def home():
+    return "Global Market API Running"
 
 # --------------------------------
 # MAIN
