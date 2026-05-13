@@ -1,9 +1,7 @@
 from flask import Flask, jsonify
-from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import yfinance as yf
-import json
 
 app = Flask(__name__)
 
@@ -11,6 +9,8 @@ app = Flask(__name__)
 # STOCK LIST
 # --------------------------------
 stocks = [
+
+    # INDIA
     "ABREL.NS",
     "ACC.NS",
     "AMBUJACEM.NS",
@@ -49,9 +49,11 @@ stocks = [
     "TATAPOWER.NS",
     "TATASTEEL.NS",
     "TCS.NS",
-    "TMCV.NS",
-    "TMPV.NS",
     "WIPRO.NS",
+    "INDIGRID-IV.NS",
+    "PGINVIT-IV.NS"
+
+    # ETFs
     "BANKBEES.NS",
     "FMCGIETF.NS",
     "NIFTYBEES.NS",
@@ -63,8 +65,8 @@ stocks = [
     "EBBETF0433.NS",
     "GOLDBEES.NS",
     "SILVERBEES.NS",
-    "INDIGRID-IV.NS",
-    "PGINVIT-IV.NS",
+    
+    # USA
     "PHYS",
     "SHY",
     "IEI",
@@ -91,79 +93,78 @@ stocks = [
     "PALL",
     "URNM",
     "SIL",
+
+    # JAPAN
     "8088.T",
     "6310.T",
     "6326.T",
+
+    # CURRENCY
     "USDINR=X",
     "JPYINR=X"
 ]
 
-latest_data = []
-
 # --------------------------------
-# FETCH STOCK DATA
+# FETCH LIVE DATA
 # --------------------------------
-def fetch_stock_data():
-    global latest_data
+@app.route('/data')
+def get_data():
 
     data_list = []
 
     for ticker in stocks:
+
         try:
 
             stock = yf.Ticker(ticker)
 
-            # Fast latest data
-            info = stock.fast_info
+            fast_info = stock.fast_info
+
+            hist = stock.history(period="2d")
+
+            previous_close = None
+
+            if len(hist) > 1:
+                previous_close = float(hist["Close"].iloc[-2])
+
+            current_price = fast_info.get("lastPrice")
+
+            currency = fast_info.get("currency")
 
             data_list.append({
+
                 "Ticker": ticker,
-                "CurrentPrice": info.get("lastPrice"),
-                "PreviousClose": stock.history(period="2d")["Close"].iloc[-2] if len(stock.history(period="2d")) > 1 else None,
-                "Currency": info.get("currency"),
+
+                "CurrentPrice": current_price,
+
+                "PreviousClose": previous_close,
+
+                "Currency": currency,
+
                 "TimeIST": datetime.now(
                     ZoneInfo("Asia/Kolkata")
                 ).strftime("%Y-%m-%d %H:%M:%S")
+
             })
 
         except Exception as e:
 
             data_list.append({
+
                 "Ticker": ticker,
+
                 "Error": str(e),
+
                 "TimeIST": datetime.now(
                     ZoneInfo("Asia/Kolkata")
                 ).strftime("%Y-%m-%d %H:%M:%S")
+
             })
 
-    latest_data = data_list
-
-    # overwrite latest snapshot
-    with open("latest_data.json", "w") as f:
-        json.dump(latest_data, f)
-
-    print("Latest stock data updated")
-
+    return jsonify(data_list)
 
 # --------------------------------
-# RUN EVERY 5 MINUTES
-# --------------------------------
-scheduler = BackgroundScheduler()
-scheduler.add_job(fetch_stock_data, 'interval', minutes=5)
-scheduler.start()
-
-# run immediately at startup
-fetch_stock_data()
-
-# --------------------------------
-# API ENDPOINT
-# --------------------------------
-@app.route('/data')
-def get_data():
-    return jsonify(latest_data)
-
-# --------------------------------
-# HOME ROUTE
+# HOME
 # --------------------------------
 @app.route('/')
 def home():
