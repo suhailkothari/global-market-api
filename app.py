@@ -49,6 +49,8 @@ stocks = [
     "TATAPOWER.NS",
     "TATASTEEL.NS",
     "TCS.NS",
+    "TMCV.NS",
+    "TMPV.NS",
     "WIPRO.NS",
     "INDIGRID-IV.NS",
     "PGINVIT-IV.NS",
