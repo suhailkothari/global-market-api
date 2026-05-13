@@ -1,14 +1,14 @@
 from flask import Flask, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
-import requests
-import json
 from datetime import datetime
+import yfinance as yf
+import json
 
 app = Flask(__name__)
 
-# -----------------------------
-# YOUR STOCK LIST
-# -----------------------------
+# --------------------------------
+# STOCK LIST
+# --------------------------------
 stocks = [
     "RELIANCE.NS",
     "TCS.NS",
@@ -20,9 +20,9 @@ stocks = [
 
 latest_data = []
 
-# -----------------------------
-# FETCH DATA FUNCTION
-# -----------------------------
+# --------------------------------
+# FETCH STOCK DATA
+# --------------------------------
 def fetch_stock_data():
     global latest_data
 
@@ -30,33 +30,20 @@ def fetch_stock_data():
 
     for ticker in stocks:
         try:
-            url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={ticker}"
-            headers = {
-                "User-Agent": "Mozilla/5.0"
-            }
-            response = requests.get(url, headers=headers, timeout=10)
 
-            print("Status Code:", response.status_code)
-            print("Response Text:", response.text[:200])
+            stock = yf.Ticker(ticker)
 
-            data = response.json()
-
-            if 'quoteResponse' not in data:
-                raise Exception("Invalid Yahoo response")
-
-            if len(data['quoteResponse']['result']) == 0:
-                raise Exception("No stock data returned")
-
-            result = data['quoteResponse']['result'][0]
+            info = stock.info
 
             data_list.append({
                 "Ticker": ticker,
-                "Price": result.get("regularMarketPrice"),
-                "Currency": result.get("currency"),
+                "Price": info.get("currentPrice"),
+                "Currency": info.get("currency"),
                 "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
 
         except Exception as e:
+
             data_list.append({
                 "Ticker": ticker,
                 "Error": str(e)
@@ -68,28 +55,28 @@ def fetch_stock_data():
     with open("latest_data.json", "w") as f:
         json.dump(latest_data, f)
 
-    print("Updated latest data")
+    print("Latest stock data updated")
 
 
-# -----------------------------
+# --------------------------------
 # RUN EVERY 5 MINUTES
-# -----------------------------
+# --------------------------------
 scheduler = BackgroundScheduler()
 scheduler.add_job(fetch_stock_data, 'interval', minutes=5)
 scheduler.start()
 
-# run once at startup
+# Run once immediately on startup
 fetch_stock_data()
 
-# -----------------------------
+# --------------------------------
 # API ENDPOINT
-# -----------------------------
+# --------------------------------
 @app.route('/data')
 def get_data():
     return jsonify(latest_data)
 
-# -----------------------------
+# --------------------------------
 # MAIN
-# -----------------------------
+# --------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
