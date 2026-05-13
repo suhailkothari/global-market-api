@@ -31,9 +31,13 @@ def fetch_stock_data():
     for ticker in stocks:
         try:
             url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={ticker}"
-            response = requests.get(url).json()
+            headers = {
+                "User-Agent": "Mozilla/5.0"
+            }
+            response = requests.get(url, headers=headers)
+            data = response.json()
 
-            result = response['quoteResponse']['result'][0]
+            result = data['quoteResponse']['result'][0]
 
             data_list.append({
                 "Ticker": ticker,
