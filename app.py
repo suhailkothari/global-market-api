@@ -52,8 +52,6 @@ stocks = [
     "WIPRO.NS",
     "INDIGRID-IV.NS",
     "PGINVIT-IV.NS"
-
-    # ETFs
     "BANKBEES.NS",
     "FMCGIETF.NS",
     "NIFTYBEES.NS",
