@@ -40,7 +40,7 @@ def fetch_stock_data():
             data_list.append({
                 "Ticker": ticker,
                 "CurrentPrice": info.get("lastPrice"),
-                "PreviousClose": info.get("previousClose"),
+                "PreviousClose": stock.history(period="2d")["Close"].iloc[-2] if len(stock.history(period="2d")) > 1 else None,
                 "Currency": info.get("currency"),
                 "TimeIST": datetime.now(
                     ZoneInfo("Asia/Kolkata")
