@@ -65,7 +65,7 @@ stocks = [
     "EBBETF0433.NS",
     "GOLDBEES.NS",
     "SILVERBEES.NS",
-    
+
     # USA
     "PHYS",
     "SHY",
@@ -118,18 +118,17 @@ def get_data():
 
             stock = yf.Ticker(ticker)
 
+            # Use only fast_info
             fast_info = stock.fast_info
 
-            hist = stock.history(period="2d")
-
-            previous_close = None
-
-            if len(hist) > 1:
-                previous_close = float(hist["Close"].iloc[-2])
-
             current_price = fast_info.get("lastPrice")
-
+            previous_close = fast_info.get("previousClose")
             currency = fast_info.get("currency")
+
+            # Skip completely empty responses
+            if current_price is None and previous_close is None:
+                print(f"Skipping invalid/no-data ticker: {ticker}")
+                continue
 
             data_list.append({
 
@@ -149,17 +148,12 @@ def get_data():
 
         except Exception as e:
 
-            data_list.append({
+            # IMPORTANT:
+            # Don't append error rows to response
+            # Just log and continue
+            print(f"Error processing {ticker}: {str(e)}")
 
-                "Ticker": ticker,
-
-                "Error": str(e),
-
-                "TimeIST": datetime.now(
-                    ZoneInfo("Asia/Kolkata")
-                ).strftime("%Y-%m-%d %H:%M:%S")
-
-            })
+            continue
 
     return jsonify(data_list)
 
@@ -168,10 +162,12 @@ def get_data():
 # --------------------------------
 @app.route('/')
 def home():
+
     return "Global Market API Running"
 
 # --------------------------------
 # MAIN
 # --------------------------------
 if __name__ == "__main__":
+
     app.run(host="0.0.0.0", port=10000)
